@@ -1,7 +1,4 @@
-#include <iostream>
-
 #include "Game.h"
-
 
 int main(int argc, char** argv) {
 
@@ -45,6 +42,11 @@ int main(int argc, char** argv) {
 		if (g.evalWinConditions())
 			break;
 	}
+
+	if (g.isBlacksTurn())
+		std::cout << "White wins!";
+	else
+		std::cout << "Black wins!";
 
 	return 0;
 }

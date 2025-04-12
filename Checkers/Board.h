@@ -1,8 +1,5 @@
 #pragma once
-#include <vector>
 #include <iostream>
-#include <algorithm>
-#include <stdlib.h>
 
 typedef struct _cords {
 	int y;
@@ -32,13 +29,6 @@ public:
 	void capturePiece(move);
 	void promotePiece(cords);
 
-	std::vector<cords>blackPieces;
-	std::vector<cords>whitePieces;
-
-	char board[8][8];
-
 private:
-	// vec of black pieces
-	// vec of white pieces
-
+	char board[8][8];
 };

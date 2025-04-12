@@ -102,7 +102,6 @@ void Game::takeValidUserInput() {
 	}
 
 	do {
-
 		std::cout << "Target move (<row> <col>): ";
 		std::cin >> col >> row;
 
