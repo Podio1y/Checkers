@@ -19,53 +19,52 @@ bool Game::inBounds(cords c) {
 	return (c.x >= 0) && (c.x < 8) && (c.y >= 0) && (c.y < 8);
 }
 
-void Game::nextTurn() {
-	blacksTurn = !blacksTurn;
-}
-
 void Game::calculateAllPossibleMovesForPiece(cords piece) {
-	int direction = (blacksTurn) ? 1 : -1; // 1 is down
+	int direction = (isBlacksTurn()) ? 1 : -1; // 1 is down
+	cords adjacentDiagCords = piece;
+	cords captureDiagCords = piece;
 
-	possibleMoves.clear();
+	clearPossibleMoves();
 
 	for (int y = -1; y < 2; y += 2) {
 
 		for (int x = -1; x < 2; x += 2) {
 
-			if (!inBounds({ piece.x + x, piece.y + y }))
+			adjacentDiagCords = { piece.y + y, piece.x + x };
+
+			if (!inBounds(adjacentDiagCords))
 				continue;
 
-			if (!b->isKing(piece.y, piece.x) && direction != y)
+			if (!b->isKing(piece) && direction != y)
 				continue;
 
 			// If not a piece, then we can move there.
-			if (!activeCapture && !b->isPiece(piece.y + y, piece.x + x)) {
-				possibleMoves.push_back({ piece.x + x, piece.y + y });
+			if (!activeCapture && !b->isPiece(adjacentDiagCords)) {
+				addPossibleMove(adjacentDiagCords);
 			}
-
 			// else if its a piece of the opposite color, check if we can capture.
-			else if (b->isBlack(piece.y + y, piece.x + x) != blacksTurn) {
+			else if (b->isBlack(adjacentDiagCords) != isBlacksTurn()) {
 
-				if (inBounds({ piece.x + 2 * x, piece.y + 2 * y })) {
+				captureDiagCords = { piece.y + 2 * y, piece.x + 2 * x };
 
-					if (!b->isPiece(piece.y + 2 * y, piece.x + 2 * x))
-						possibleMoves.push_back({ piece.x + 2 * x, piece.y + 2 * y });
-				}
+				if (inBounds(captureDiagCords) && !b->isPiece(captureDiagCords))
+					addPossibleMove(captureDiagCords);
+
 			}
 		}
 	}
 }
 
-bool Game::pieceHasMoves(int row, int col) {
-	calculateAllPossibleMovesForPiece({ col, row });
-	return possibleMoves.size() > 0;
+bool Game::pieceHasMoves(cords c) {
+	calculateAllPossibleMovesForPiece(c);
+	return getCurrentNumberOfPossibleMoves() > 0;
 }
 
-bool Game::validateSelection(int row, int col) {
-	if (!inBounds({col, row}))
+bool Game::validateSelection(cords c) {
+	if (!inBounds(c))
 		return false;
 
-	return b->isPiece(row, col) && (blacksTurn == b->isBlack(row, col)) && pieceHasMoves(row, col);
+	return b->isPiece(c) && (isBlacksTurn() == b->isBlack(c)) && pieceHasMoves(c);
 }
 
 bool Game::equalCords(cords a, cords b) {
@@ -73,7 +72,7 @@ bool Game::equalCords(cords a, cords b) {
 }
 
 bool Game::validateTarget(move m) {
-	for (cords c : possibleMoves) {
+	for (cords c : getCachedPossibleMoves()) {
 		if (equalCords(c, m.target))
 			return true;
 	}
@@ -81,12 +80,12 @@ bool Game::validateTarget(move m) {
 	return false;
 }
 
-void Game::takeUserInput() {
+void Game::takeValidUserInput() {
 	char col = '.';
 	int row = -1;
 
-	if (!activeCapture) {
-		currentMove = blankMove();
+	if (!isCurrentlyActiveCapture()) {
+		setCurrentMove(blankMove());
 		do {
 			std::cout << "Select piece (<row> <col>): ";
 			std::cin >> col >> row;
@@ -94,7 +93,7 @@ void Game::takeUserInput() {
 			currentMove.selected.x = col - 97;
 			currentMove.selected.y = row;
 
-		} while (!validateSelection(currentMove.selected.y, currentMove.selected.x));
+		} while (!validateSelection(currentMove.selected));
 
 		std::cout << "\n";
 	}
@@ -118,7 +117,9 @@ void Game::takeUserInput() {
 	} while (!validateTarget(currentMove));
 
 	std::cout << "\n";
+}
 
+void Game::performUserInput() {
 	b->movePiece(currentMove);
 
 	if (earnedPromotion(currentMove))
@@ -128,13 +129,13 @@ void Game::takeUserInput() {
 		b->capturePiece(currentMove);
 
 		activeCapture = true;
-		activeCapture = pieceHasMoves(currentMove.target.y, currentMove.target.x);
+		activeCapture = pieceHasMoves(currentMove.target);
 		b->printBoard(blacksTurn);
 	}
 }
 
 bool Game::earnedPromotion(move m) {
-	if (b->isKing(m.target.y, m.target.x))
+	if (b->isKing(m.target))
 		return false;
 
 	return (blacksTurn && m.target.y == 7) || (!blacksTurn && m.target.y == 0);
@@ -143,17 +144,20 @@ bool Game::earnedPromotion(move m) {
 bool Game::evalWinConditions() {
 	bool blackCanMove = false;
 	bool whiteCanMove = false;
+	cords c;
 
 	for (int i = 0; i < 8; i++) {
 
 		for (int j = 0; j < 8; j++) {
 
-			if (b->isPiece(i, j)) {
-				calculateAllPossibleMovesForPiece({ j, i });
+			c = { j, i };
+
+			if (b->isPiece(c)) {
+				calculateAllPossibleMovesForPiece(c);
 
 				if (possibleMoves.size() > 0) {
 
-					if (b->isBlack(i, j))
+					if (b->isBlack(c))
 						blackCanMove = true;
 					else
 						whiteCanMove = true;
@@ -163,4 +167,50 @@ bool Game::evalWinConditions() {
 	}
 
 	return (!blackCanMove && blacksTurn) || (!whiteCanMove && !blacksTurn);
+}
+
+// Getters
+Board* Game::getBoard() {
+	return b;
+}
+
+move Game::getCurrentMove() {
+	return currentMove;
+}
+
+bool Game::isBlacksTurn() {
+	return blacksTurn;
+}
+
+bool Game::isCurrentlyActiveCapture() {
+	return activeCapture;
+}
+
+int Game::getCurrentNumberOfPossibleMoves() {
+	return possibleMoves.size();
+}
+
+const std::vector<cords> Game::getCachedPossibleMoves() {
+	return possibleMoves;
+}
+
+// Setters
+void Game::setCurrentMove(move m) {
+	currentMove = m;
+}
+
+void Game::setCaptureState(bool newState) {
+	activeCapture = newState;
+}
+
+void Game::addPossibleMove(cords possibleTarget) {
+	possibleMoves.push_back(possibleTarget);
+}
+
+void Game::clearPossibleMoves() {
+	possibleMoves.clear();
+}
+
+void Game::nextTurn() {
+	blacksTurn = !blacksTurn;
 }

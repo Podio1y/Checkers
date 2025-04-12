@@ -33,11 +33,12 @@ int main(int argc, char** argv) {
 	Game g(&b);
 
 	while (true) {
-		b.printBoard(g.blacksTurn);
+		b.printBoard(g.isBlacksTurn());
 
 		do {
-			g.takeUserInput();
-		} while (g.activeCapture);
+			g.takeValidUserInput();
+			g.performUserInput();
+		} while (g.isCurrentlyActiveCapture());
 
 		g.nextTurn();
 

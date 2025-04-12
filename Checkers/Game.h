@@ -6,32 +6,49 @@ class Game
 public:
 	Game(Board*);
 	~Game();
+	
+	// User input
+	void takeValidUserInput();
+	void performUserInput();
 
-	void takeUserInput();
+	// User input validation
+	bool validateSelection(cords);
+	bool validateTarget(move);
+	void calculateAllPossibleMovesForPiece(cords);
+	bool pieceHasMoves(cords);
 
-	bool validateSelection(int, int);
-	bool pieceHasMoves(int, int);
+	// Misc.
 	bool inBounds(cords);
 
-	bool validateTarget(move);
 	bool equalCords(cords, cords);
-	void nextTurn();
-	bool earnedPromotion(move);
 
-	void calculateAllPossibleMovesForPiece(cords);
+	bool earnedPromotion(move);
 
 	bool evalWinConditions();
 
 	move blankMove();
 
+	// Getters
+	Board* getBoard();
+	move getCurrentMove();
+	bool isBlacksTurn();
+	bool isCurrentlyActiveCapture();
+	int getCurrentNumberOfPossibleMoves();
+	const std::vector<cords> getCachedPossibleMoves();
+
+	// Setters
+	void setCurrentMove(move);
+	void nextTurn();
+	void setCaptureState(bool);
+	void addPossibleMove(cords);
+	void clearPossibleMoves();
+
+private:
 	Board* b;
 	move currentMove;
 	bool blacksTurn;
 	bool activeCapture;
 
 	std::vector<cords>possibleMoves;
-
-private:
-	
 };
 

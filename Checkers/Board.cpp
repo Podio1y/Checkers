@@ -70,7 +70,7 @@ void Board::capturePiece(move m) {
 }
 
 void Board::promotePiece(cords c) {
-	if (isBlack(c.y, c.x))
+	if (isBlack(c))
 		board[c.y][c.x] = 'B';
 	else
 		board[c.y][c.x] = 'W';
@@ -80,14 +80,14 @@ bool Board::isCapture(move m) {
 	return (m.target.x - m.selected.x) > 1 || (m.target.x - m.selected.x) < -1;
 }
 
-bool Board::isBlack(int row, int col) {
-	return (board[row][col] == 'b') || (board[row][col] == 'B');
+bool Board::isBlack(cords c) {
+	return (board[c.y][c.x] == 'b') || (board[c.y][c.x] == 'B');
 }
 
-bool Board::isPiece(int row, int col) {
-	return board[row][col] != ' ';
+bool Board::isPiece(cords c) {
+	return board[c.y][c.x] != ' ';
 }
 
-bool Board::isKing(int row, int col) {
-	return (board[row][col] < 97) && (board[row][col] != ' ');
+bool Board::isKing(cords c) {
+	return (board[c.y][c.x] < 97) && (board[c.y][c.x] != ' ');
 }

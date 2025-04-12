@@ -5,8 +5,8 @@
 #include <stdlib.h>
 
 typedef struct _cords {
-	int x;
 	int y;
+	int x;
 } cords;
 
 typedef struct _move {
@@ -23,9 +23,9 @@ public:
 	void initBoard();
 	void printBoard(bool);
 
-	bool isPiece(int, int);
-	bool isBlack(int, int);
-	bool isKing(int, int);
+	bool isPiece(cords);
+	bool isBlack(cords);
+	bool isKing(cords);
 	bool isCapture(move);
 
 	void movePiece(move);
